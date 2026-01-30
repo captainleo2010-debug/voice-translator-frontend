@@ -4,6 +4,7 @@ const socket = io(BACKEND_URL, {
   transports: ['websocket']
 });
 
+// DOM elements
 const joinBtn = document.getElementById('joinBtn');
 const micBtn = document.getElementById('micBtn');
 const roomInput = document.getElementById('roomId');
@@ -16,12 +17,13 @@ let roomId = null;
 let recognition = null;
 let isRecognizing = false;
 
+// ===== UI helpers =====
 function appendLog(msg) {
   logDiv.textContent += msg + '\n';
   logDiv.scrollTop = logDiv.scrollHeight;
 }
 
-// Web Speech API setup
+// ===== Speech setup =====
 function setupSpeechRecognition() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SpeechRecognition) {
@@ -50,14 +52,14 @@ function setupSpeechRecognition() {
   };
 }
 
-// Update speech language when dropdown changes
+// language change
 myLangSelect.addEventListener('change', () => {
   if (recognition) {
     recognition.lang = myLangSelect.value === 'Bangla' ? 'bn-BD' : 'en-US';
   }
 });
 
-// Join room
+// ===== Room join =====
 joinBtn.addEventListener('click', () => {
   roomId = roomInput.value.trim();
   if (!roomId) {
@@ -70,12 +72,13 @@ joinBtn.addEventListener('click', () => {
   setupSpeechRecognition();
 });
 
-// Mic handlers
+// ===== Mic handlers =====
 function startListening() {
   if (!recognition) {
     setupSpeechRecognition();
   }
   if (!recognition || isRecognizing) return;
+
   try {
     recognition.start();
     isRecognizing = true;
@@ -103,7 +106,7 @@ micBtn.addEventListener('touchend', (e) => {
   stopListening();
 });
 
-// Send text to backend for translation + TTS
+// ===== Socket events =====
 function sendTextToBackend(text) {
   if (!roomId) {
     appendLog('Join a room first.');
@@ -120,7 +123,6 @@ function sendTextToBackend(text) {
   });
 }
 
-// Receive audio from backend
 socket.on('play_audio', (data) => {
   const { audio, textOriginal, textTranslated, fromLang, toLang } = data;
   appendLog(`Partner (${fromLang}→${toLang}): "${textOriginal}" -> "${textTranslated}"`);
@@ -141,6 +143,7 @@ socket.on('connect_error', (err) => {
   appendLog('Socket connect error: ' + err.message);
 });
 
+// helper
 function base64ToBlob(base64, mime) {
   const byteChars = atob(base64);
   const byteNumbers = new Array(byteChars.length);
