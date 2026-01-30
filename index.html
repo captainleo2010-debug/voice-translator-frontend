@@ -2,112 +2,48 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Bangla ↔ English Voice Translator (Mic Test)</title>
+  <title>Bangla ↔ English Voice Translator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body { font-family: sans-serif; padding: 16px; }
     .container { max-width: 480px; margin: 0 auto; }
     button { padding: 12px 20px; margin-top: 10px; width: 100%; }
-    select { width: 100%; padding: 8px; margin: 6px 0; }
-    .log { margin-top: 16px; font-size: 14px; white-space: pre-wrap; border: 1px solid #ddd; padding: 8px; border-radius: 6px; min-height: 80px; }
+    select, input { width: 100%; padding: 8px; margin: 6px 0; }
+    .log { margin-top: 16px; font-size: 14px; white-space: pre-wrap; border: 1px solid #ddd; padding: 8px; border-radius: 6px; height: 150px; overflow-y: auto; }
     .mic-active { background: #ff5555; color: white; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Bangla ↔ English Voice Translator (Mic → Text)</h2>
+    <h2>Bangla ↔ English Voice Translator</h2>
 
-    <label>Your speaking language</label>
+    <label>Room ID (same on both phones)</label>
+    <input id="roomId" placeholder="e.g. room123" />
+
+    <label>Your language</label>
     <select id="myLang">
       <option value="English">English</option>
       <option value="Bangla">Bangla</option>
     </select>
 
-    <button id="micBtn">Hold to Speak</button>
+    <label>Partner language</label>
+    <select id="partnerLang">
+      <option value="Bangla">Bangla</option>
+      <option value="English">English</option>
+    </select>
+
+    <button id="joinBtn">Join Room</button>
+    <button id="micBtn" disabled>Hold to Speak</button>
 
     <div class="log" id="log"></div>
+    <audio id="audioPlayer"></audio>
   </div>
 
-  <script>
-    const micBtn = document.getElementById('micBtn');
-    const myLangSelect = document.getElementById('myLang');
-    const logDiv = document.getElementById('log');
+  <!-- Socket.io client -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"
+          integrity="sha384-qJeXQF3hNqglH6HNGfCFx2Z6kppLEmJgqEQuze+lJN+TSvM5C27Ira+ZeZHvq2Fv"
+          crossorigin="anonymous"></script>
 
-    let recognition = null;
-    let isRecognizing = false;
-
-    function appendLog(msg) {
-      logDiv.textContent += msg + '\\n';
-      logDiv.scrollTop = logDiv.scrollHeight;
-    }
-
-    function setupSpeechRecognition() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        appendLog('Web Speech API not supported on this browser.');
-        return;
-      }
-
-      recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = myLangSelect.value === 'Bangla' ? 'bn-BD' : 'en-US';
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        appendLog('You said: ' + transcript);
-      };
-
-      recognition.onerror = (event) => {
-        appendLog('Speech recognition error: ' + event.error);
-      };
-
-      recognition.onend = () => {
-        isRecognizing = false;
-        micBtn.classList.remove('mic-active');
-      };
-    }
-
-    myLangSelect.addEventListener('change', () => {
-      if (recognition) {
-        recognition.lang = myLangSelect.value === 'Bangla' ? 'bn-BD' : 'en-US';
-      }
-    });
-
-    function startListening() {
-      if (!recognition) {
-        setupSpeechRecognition();
-      }
-      if (!recognition || isRecognizing) return;
-      try {
-        recognition.start();
-        isRecognizing = true;
-        micBtn.classList.add('mic-active');
-        appendLog('Listening...');
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    function stopListening() {
-      if (!recognition || !isRecognizing) return;
-      recognition.stop();
-    }
-
-    micBtn.addEventListener('mousedown', startListening);
-    micBtn.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      startListening();
-    });
-    micBtn.addEventListener('mouseup', stopListening);
-    micBtn.addEventListener('mouseleave', stopListening);
-    micBtn.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      stopListening();
-    });
-
-    // Initial setup
-    setupSpeechRecognition();
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>
